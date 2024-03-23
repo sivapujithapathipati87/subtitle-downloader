@@ -5,7 +5,7 @@ FROM tomcat:latest
 WORKDIR /app
 
 # Copy the application JAR file into the container
-COPY target/subtitle-downloader.jar /app/subtitle-downloader.jar
+COPY subtitle-downloader.jar /app/subtitle-downloader.jar
 
 # Expose any ports the app needs
 EXPOSE 8080
