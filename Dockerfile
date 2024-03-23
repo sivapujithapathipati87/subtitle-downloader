@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app/subtitle-downloader.jar
 
 # Expose any ports the app needs
-EXPOSE 8080
+EXPOSE 8000
 
 # Run the application
 CMD ["java", "-jar", "subtitle-downloader.jar"]
