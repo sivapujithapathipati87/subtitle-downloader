@@ -1,15 +1,14 @@
 pipeline {
     agent any
+    environment {
+        // Corrected variable name
+        DOCKER_CREDS = credentials('docker123')
+        DOCKER_IMAGE = 'sivapujitha'
+    }
     tools {
         maven 'maven'
     }
     stages {
-        //clone the source code from git
-        stage('Clone sources') {
-            steps {
-               git 'https://github.com/sivapujithapathipati87/subtitle-downloader.git'
-            }
-        }
         // build the code using mvn
         stage('Build') {
             steps {
@@ -39,11 +38,12 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker123', usernameVariable: 'sivapujitha', passwordVariable: 'Rakhi#123$')]) {
-                        sh 'docker login -u sivapujitha -p Rakhi#123$'
+                    withCredentials([usernamePassword(credentialsId: 'docker123', usernameVariable: 'DOCKER_CREDS_USR', passwordVariable: 'DOCKER_CREDS_PSW')]) {
+                        sh 'docker login -u $DOCKER_CREDS_USR -p $DOCKER_CREDS_PSW'
                     }
-                    sh 'docker tag java-application sivapujitha/java-application:latest'
-                    sh 'docker push sivapujitha/java-application:latest'
+                    sh 'docker tag react $DOCKER_IMAGE/java-application:latest'
+                    sh 'docker push $DOCKER_IMAGE/java-application:latest'
+
                 }
             }
         }
