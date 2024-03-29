@@ -4,6 +4,8 @@ pipeline {
         // Corrected variable name
         DOCKER_CREDS = credentials('docker123')
         DOCKER_IMAGE = 'sivapujitha'
+        IMAGE_NAME = 'java-application'
+        IMAGE_TAG = 'latest' 
     }
     tools {
         maven 'maven'
@@ -31,7 +33,7 @@ pipeline {
         // docker image build using dockerfile
         stage('Docker Build') {
             steps {
-                sh 'docker build -t java-application .'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
         //docker image push into docker hub
@@ -41,8 +43,8 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'docker123', usernameVariable: 'DOCKER_CREDS_USR', passwordVariable: 'DOCKER_CREDS_PSW')]) {
                         sh 'docker login -u $DOCKER_CREDS_USR -p $DOCKER_CREDS_PSW'
                     }
-                    sh 'docker tag react $DOCKER_IMAGE/java-application:latest'
-                    sh 'docker push $DOCKER_IMAGE/java-application:latest'
+                    sh 'docker tag react $DOCKER_IMAGE/$IMAGE_NAME:$IMAGE_TAG'
+                    sh 'docker push $DOCKER_IMAGE/$IMAGE_NAME:$IMAGE_TAG'
 
                 }
             }
@@ -50,13 +52,13 @@ pipeline {
         //run the container using docker image 
         stage('Run') {
             steps {
-                sh 'docker run -d -p 8000:8000 --name java-application java-application'
+                sh 'docker run -d -p 8000:8000 --name $IMAGE_NAME $IMAGE_NAME'
             }
         }
         //docker image scanning using trivy
          stage('Trivy image scan') {
             steps {
-                sh 'trivy image java-application'
+                sh 'trivy image $IMAGE_NAME'
             }
         }
     }
