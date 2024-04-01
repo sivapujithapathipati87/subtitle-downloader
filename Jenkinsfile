@@ -1,11 +1,18 @@
 pipeline {
     agent any
     environment {
-        // Corrected variable name
-        DOCKER_CREDS = credentials('docker123')
-        DOCKER_IMAGE = 'sivapujitha'
+         //sonarqube env variables
+        SONAR_SCANNER='/opt/sonar-scanner' 
+        SONAR_URL= 'http://localhost:9000'
+        SONAR_PROJECTKEY='java-application'
+        SONAR_LOGIN='sqp_5ecda522e2bfd890796bbe764381d30dae231b99'
+        // harbor env variables
+        HARBOR = credentials('harbour123')
+        HARBOR_REGISTRY = 'new-harbor.duckdns.org'
+        HARBOR_PROJECT = 'new_project'
         IMAGE_NAME = 'java-application'
-        IMAGE_TAG = 'latest' 
+        IMAGE_TAG = 'latest'
+        IMAGE_PORT= '8000:8000'     
     }
     tools {
         maven 'maven'
@@ -23,9 +30,9 @@ pipeline {
                 withSonarQubeEnv(credentialsId: 'sonarqube', installationName: 'sonarqube') {
                     sh '''
                         mvn clean verify sonar:sonar \
-                        -Dsonar.projectKey=java-application\
-                        -Dsonar.host.url=http://laoclalhost:9000 \
-                        -Dsonar.login=sqp_5ecda522e2bfd890796bbe764381d30dae231b99
+                         -Dsonar.projectKey=$SONAR_PROJECTKEY \
+                         -Dsonar.host.url=$SONAR_URL \
+                         -Dsonar.login=$SONAR_LOGIN
                     '''
                 }
             }
@@ -52,7 +59,7 @@ pipeline {
         //run the container using docker image 
         stage('Run') {
             steps {
-                sh 'docker run -d -p 8000:8000 --name $IMAGE_NAME $IMAGE_NAME'
+                sh 'docker run -d -p $IMAGE_PORT --name $IMAGE_NAME $IMAGE_NAME'
             }
         }
         //docker image scanning using trivy
@@ -63,19 +70,20 @@ pipeline {
         }
     }
     //email notification
-    post {
-           success {
-                    archiveArtifacts artifacts: '**/subtitle-downloader*.jar'
-                    junit testResults: '**/TEST-*.xml'
-                    mail subject: 'build stage succeded',
-                          to: 'pujisiri2008@gmail.com',
-                          body: "Refer to $BUILD_URL for more details"
-            }
-           failure {
-                    mail subject: 'build stage failed',
-                         to: 'pujisiri2008@gmail.com',
-                         body: "Refer to $BUILD_URL for more details"
-                }
+      post {
+        success {
+            // Send Slack notification on successful build
+            slackSend(
+                color: '#00FF00',
+                message: "Build successful: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+            )
         }
-    }
+        failure {
+            // Send Slack notification on build failure
+            slackSend(
+                color: '#FF0000',
+                message: "Build failed: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+            )
+        }
+    }  
 }
